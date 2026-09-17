@@ -1,4 +1,12 @@
 services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/usr/share/nginx/html:ro
+    restart: unless-stopped
+
   db:
     image: postgres:17
     restart: unless-stopped
@@ -13,3 +21,4 @@ services:
 
 volumes:
   postgres_data:
+ 

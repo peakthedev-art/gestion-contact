@@ -45,20 +45,10 @@ cd chemin/vers/mon-projet
 Initialiser le repository Git :
 
 ```
-git init
+Créer un nouveau repo git sur GitHub
+Sur VS Code, mettre "Cloner un repository" et mettre le lien du nouveau repo
 ```
 
-Définir main comme branche principale :
-
-```
-git branch -M main
-```
-
-Vérifier l'état du projet :
-
-```
-git status
-```
 
 ### 3. Vérifier le .gitignore
 
@@ -136,137 +126,229 @@ Mot de passe	change-moi
 Port	5432
 ```
 
-Depuis la machine locale, PostgreSQL est accessible via :
-
-```
-localhost:5432
-```
-
 Les données sont conservées dans le volume Docker :
 
 ```
 postgres_data
 ```
 
-## 🐙 GitHub
+## 🗄️ Accéder à la base de données PostgreSQL
 
-### 8. Créer le repository GitHub
+### 8. Se connecter à PostgreSQL
 
-Créer un nouveau repository sur GitHub.
+Une fois le conteneur PostgreSQL démarré, il est possible d'accéder directement à PostgreSQL depuis le terminal.
 
-Exemple :
-
-```
-mon-projet
-```
-
-Le repository doit être créé vide :
-
-❌ Pas de README
-❌ Pas de .gitignore
-❌ Pas de licence
-
-Le README et le .gitignore existent déjà dans le projet local.
-
-### 9. Connecter le projet à GitHub
-
-Ajouter le repository GitHub comme remote :
+Utiliser :
 
 ```
-git remote add origin https://github.com/USERNAME/mon-projet.git
+docker compose exec db psql -U admin -d mon_projet
 ```
 
-Remplacer USERNAME par son nom d'utilisateur GitHub.
-
-Vérifier la connexion :
+Si la connexion fonctionne, le terminal affiche quelque chose comme :
 
 ```
-git remote -v
+psql (16.x)
+Type "help" for help.
+mon_projet=#
 ```
 
-### 10. Faire le premier commit
-
-Ajouter les fichiers :
+Le symbole :
 
 ```
-git add .
+mon_projet=#
 ```
 
-Créer le premier commit :
+signifie que vous êtes maintenant connecté à la base de données PostgreSQL.
+
+Vous pouvez alors exécuter des requêtes SQL.
+
+### 9. Commandes PostgreSQL utiles
+
+Voir les bases de données
 
 ```
-git commit -m "Initial project setup"
+\l
 ```
 
-Envoyer le projet sur GitHub :
+Voir les tables
 
 ```
-git push -u origin main
+\dt
 ```
 
-Le projet est maintenant disponible sur GitHub.
-
-🔒 Le fichier .env ne sera pas envoyé grâce au .gitignore.
-
-## 🌐 Site web
-
-### 11. index.html
-
-Le fichier index.html contient actuellement une page HTML minimale :
+Voir la structure d'une table
 
 ```
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon projet</title>
-</head>
-<body>
-
-    <h1>Mon projet</h1>
-
-</body>
-</html>
+\d contacts
 ```
 
-Le fichier peut être ouvert directement dans un navigateur.
-
-## 🔄 Utilisation quotidienne
-
-Démarrer PostgreSQL
+Quitter PostgreSQL
 
 ```
-docker compose up -d
+\q
 ```
 
-Vérifier Docker
+## 📋 Manipuler une table avec SQL
+
+Les exemples suivants utilisent une table appelée contacts.
+
+### 10. Créer une table
+
+Créer une table contacts :
 
 ```
-docker compose ps
+CREATE TABLE contacts (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100),
+    email VARCHAR(255),
+    telephone VARCHAR(20)
+);
 ```
 
-Arrêter PostgreSQL
+Vérifier que la table existe :
 
 ```
-docker compose down
+\dt
 ```
 
-Les données PostgreSQL sont conservées.
+### 11. Ajouter des données — INSERT
 
-Voir les modifications Git
-
-```
-git status
-```
-
-Envoyer des modifications sur GitHub
+Ajouter un contact :
 
 ```
-git add .
-git commit -m "Description des modifications"
-git push
+INSERT INTO contacts (nom, email, telephone)
+VALUES ('Jean Dupont', 'jean@email.com', '0612345678');
 ```
+
+Ajouter plusieurs contacts :
+
+```
+INSERT INTO contacts (nom, email, telephone)
+VALUES
+    ('Jean Dupont', 'jean@email.com', '0612345678'),
+    ('Marie Martin', 'marie@email.com', '0698765432'),
+    ('Paul Durand', 'paul@email.com', '0611223344');
+```
+
+### 12. Lire les données — SELECT
+
+Afficher tous les contacts :
+
+```
+SELECT * FROM contacts;
+```
+
+Afficher uniquement les noms et les emails :
+
+```
+SELECT nom, email
+FROM contacts;
+```
+
+Afficher un contact précis :
+
+```
+SELECT *
+FROM contacts
+WHERE id = 1;
+```
+
+### 13. Mettre à jour des données — UPDATE
+
+Modifier le numéro de téléphone du contact ayant l'identifiant 1 :
+
+```
+UPDATE contacts
+SET telephone = '0600000000'
+WHERE id = 1;
+```
+
+Modifier plusieurs informations :
+
+```
+UPDATE contacts
+SET
+    nom = 'Jean Martin',
+    email = 'jean.martin@email.com'
+WHERE id = 1;
+```
+
+⚠️ Toujours faire attention à la clause WHERE.
+
+Par exemple :
+
+```
+UPDATE contacts
+SET telephone = '0600000000';
+```
+
+modifierait le numéro de téléphone de tous les contacts.
+
+### 14. Supprimer des données — DELETE
+
+Supprimer le contact ayant l'identifiant 1 :
+
+```
+DELETE FROM contacts
+WHERE id = 1;
+```
+
+⚠️ Attention à la clause WHERE.
+
+Cette requête :
+
+```
+DELETE FROM contacts;
+```
+
+supprime tous les contacts de la table.
+
+La table elle-même reste cependant présente.
+
+## 🗑️ Supprimer une table
+
+### 15. Supprimer la table contacts
+
+Pour supprimer complètement la table :
+
+```
+DROP TABLE contacts;
+```
+
+Cela supprime :
+
+La table.
+Toutes les données qu'elle contient.
+Sa structure.
+
+Pour éviter une erreur si la table n'existe pas :
+
+```
+DROP TABLE IF EXISTS contacts;
+```
+
+Vérifier ensuite :
+
+```
+\dt
+```
+
+La table contacts ne doit plus apparaître.
+
+⚠️ DROP TABLE est différent de DELETE.
+
+```
+DELETE FROM contacts;
+```
+
+➡️ Supprime les données mais conserve la table.
+
+```
+DROP TABLE contacts;
+```
+
+➡️ Supprime la table et ses données.
+
 
 ## 📌 État actuel
 
